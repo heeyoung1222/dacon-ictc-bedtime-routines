@@ -4,10 +4,20 @@ Code package for **Modeling Personalized Digital Bedtime Routines for Sleep and
 Stress Prediction Using Multimodal Lifelogs**, prepared from the DACON / ETRI
 Human Understanding AI Paper Challenge work.
 
-The submitted paper's central experiment compares daily features with bedtime
-routine windows. The best validation window in the preserved run was
+This project studies whether the hours just before sleep contain useful
+behavioral signals for next-day sleep and stress prediction. Smartphone and
+wearable lifelogs were converted into multimodal tabular features, including
+screen status, charging state, app use, GPS, Wi-Fi, BLE, light, movement, and
+wearable signals. The main research idea is the **Digital Bedtime Routine
+Window (DBRW)**: rather than treating one cue such as screen-off time as a
+universal rule, the model uses the surrounding digital and physical context of
+each subject's evening routine.
+
+The submitted paper's central experiment compares daily features with several
+bedtime routine windows. The best validation window in the preserved run was
 `day_plus_w21_24`, with mean log-loss `0.6575`, compared with `0.6590` for
-`day_only`.
+`day_only`. This supports the paper's claim that the 21:00-24:00 pre-sleep
+transition adds modest but measurable information beyond full-day summaries.
 
 ![DBRW window ablation](remade/window_ablation_logloss.png)
 
@@ -25,6 +35,29 @@ routine windows. The best validation window in the preserved run was
 Some scripts under `original_sources/` intentionally preserve old absolute
 local paths from the working computer. They are kept for traceability. Use
 `src/dbrw_extratrees_pipeline.py` for portable reruns.
+
+## Research Question
+
+The project asks:
+
+> Can a personalized digital bedtime routine window improve sleep and
+> fatigue/stress prediction compared with full-day lifelog summaries alone?
+
+The modeling approach keeps the classifier fixed and changes the feature
+window, so the validation table can be interpreted as a controlled window
+ablation. The strongest preserved result is the `21:00-24:00` window, which is
+used as the paper-aligned DBRW setting.
+
+## Project Flow
+
+1. Convert raw DACON/ETRI lifelog tables into subject-day feature tables.
+2. Build day-only and bedtime-window feature sets.
+3. Split each subject chronologically: earlier days for training, later days for
+   validation.
+4. Train one calibrated ExtraTrees classifier per target label.
+5. Compare average log-loss across time windows.
+6. Generate submission candidates and small paper-support result tables.
+7. Produce lightweight visualizations for quick review.
 
 ## Main Reproduction Script
 
@@ -87,6 +120,16 @@ The saved validation summary is in `results/window_feature_validation_summary.md
 
 ![Label-wise DBRW comparison](remade/labelwise_window_logloss.png)
 
+Interpretation:
+
+- `day_plus_w21_24` had the best average log-loss among the preserved window
+  ablation runs.
+- The gain over `day_only` is small, so the result should be described as a
+  modest validation improvement, not a large performance jump.
+- Wider windows such as `20:00-02:00` performed worse, suggesting that adding
+  after-midnight context can introduce heterogeneous behavior rather than a
+  cleaner bedtime-routine signal.
+
 ## Model
 
 The paper-aligned model is a separate binary classifier for each label:
@@ -114,6 +157,11 @@ The seven prediction targets are:
 
 ![Feature groups](remade/feature_group_importance.png)
 
+The feature-importance summary suggests that DBRW performance is not driven by
+only direct bedtime cues. Location/mobility, Wi-Fi/BLE context, app usage, and
+light/screen/charging indicators all contribute to the model's view of bedtime
+behavior.
+
 ## Notes
 
 - `personal_*` features are dropped by default in the consolidated pipeline to
@@ -122,3 +170,5 @@ The seven prediction targets are:
 - The repository is meant for code review and reproducibility. It does not
   include raw lifelog data, heavy feature tables, or final competition submission
   files.
+- The GitHub repository is private by default because it was prepared before
+  competition-code upload and does not include redistributable raw data.
