@@ -1,0 +1,13 @@
+﻿file,rows,cols,columns,time_cols,min_time,max_time,head_file
+ch2025_data_items/ch2025_mAmbience.parquet,476577,3,subject_id;timestamp;m_ambience,timestamp,2024-06-03 13:00:10,2024-11-19 23:58:10,C:\Users\jungheeyoung\Desktop\데이콘\_raw_probe\ch2025_mAmbience_head.csv
+ch2025_data_items/ch2025_mBle.parquet,21830,3,subject_id;timestamp;m_ble,timestamp,2024-06-03 13:07:00,2024-11-19 21:27:00,C:\Users\jungheeyoung\Desktop\데이콘\_raw_probe\ch2025_mBle_head.csv
+ch2025_data_items/ch2025_mUsageStats.parquet,45197,3,subject_id;timestamp;m_usage_stats,timestamp,2024-06-09 11:00:00,2024-11-19 22:10:00,C:\Users\jungheeyoung\Desktop\데이콘\_raw_probe\ch2025_mUsageStats_head.csv
+ch2025_data_items/ch2025_mLight.parquet,96258,3,subject_id;timestamp;m_light,timestamp,2024-06-03 12:57:00,2024-11-19 23:57:00,C:\Users\jungheeyoung\Desktop\데이콘\_raw_probe\ch2025_mLight_head.csv
+ch2025_data_items/ch2025_wPedo.parquet,748100,9,subject_id;timestamp;step;step_frequency;running_step;walking_step;distance;speed;burned_calories,timestamp,2024-06-03 14:15:00,2024-11-19 23:59:00,C:\Users\jungheeyoung\Desktop\데이콘\_raw_probe\ch2025_wPedo_head.csv
+ch2025_data_items/ch2025_mActivity.parquet,961062,3,subject_id;timestamp;m_activity,timestamp,2024-06-03 12:57:00,2024-11-19 23:59:00,C:\Users\jungheeyoung\Desktop\데이콘\_raw_probe\ch2025_mActivity_head.csv
+ch2025_data_items/ch2025_mACStatus.parquet,939896,3,subject_id;timestamp;m_charging,timestamp,2024-06-03 12:57:00,2024-11-19 23:59:00,C:\Users\jungheeyoung\Desktop\데이콘\_raw_probe\ch2025_mACStatus_head.csv
+ch2025_data_items/ch2025_mScreenStatus.parquet,939653,3,subject_id;timestamp;m_screen_use,timestamp,2024-06-03 12:57:00,2024-11-19 23:59:00,C:\Users\jungheeyoung\Desktop\데이콘\_raw_probe\ch2025_mScreenStatus_head.csv
+ch2025_data_items/ch2025_wLight.parquet,633741,3,subject_id;timestamp;w_light,timestamp,2024-06-03 14:28:00,2024-11-19 23:59:00,C:\Users\jungheeyoung\Desktop\데이콘\_raw_probe\ch2025_wLight_head.csv
+ch2025_data_items/ch2025_mWifi.parquet,76336,3,subject_id;timestamp;m_wifi,timestamp,2024-06-03 12:57:00,2024-11-19 23:57:00,C:\Users\jungheeyoung\Desktop\데이콘\_raw_probe\ch2025_mWifi_head.csv
+ch2025_data_items/ch2025_mGps.parquet,800611,3,subject_id;timestamp;m_gps,timestamp,2024-06-03 12:57:00,2024-11-19 23:59:00,C:\Users\jungheeyoung\Desktop\데이콘\_raw_probe\ch2025_mGps_head.csv
+ch2025_data_items/ch2025_wHr.parquet,382918,3,subject_id;timestamp;heart_rate,timestamp,2024-06-03 14:28:00,2024-11-19 15:37:00,C:\Users\jungheeyoung\Desktop\데이콘\_raw_probe\ch2025_wHr_head.csv

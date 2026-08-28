@@ -76,9 +76,12 @@ data/
   ch2026_submission_sample.csv
 ```
 
-The raw DACON/ETRI data and generated large feature tables are intentionally not
-committed. To rebuild the feature tables from raw data, start from
-`original_sources/make_features.py`, then the sleep-window extension scripts.
+This private repository now also includes the raw competition files under
+`data/raw/` and the label/sample files under `data/meta/`. The consolidated
+script expects already-built feature tables. To rebuild those feature tables
+from raw data, start from `original_sources/make_features.py`, then the
+sleep-window extension scripts. Some original scripts still contain old local
+paths, so update their path constants before rerunning them.
 
 Run the DBRW window ablation:
 

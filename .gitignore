@@ -4,15 +4,23 @@ __pycache__/
 venv/
 .ipynb_checkpoints/
 
-# Competition data and generated heavy artifacts
-data/
+# Generated heavy artifacts
+data/generated/
 outputs/
-*.parquet
 *.npz
 feature_table_*.csv
 submission_*.csv
 
+# Private repository includes the original competition files under data/.
+!data/
+!data/raw/
+!data/raw/*.parquet
+!data/meta/
+!data/meta/*.csv
+!data/meta/*.pdf
+!data/probe/
+!data/probe/*.csv
+
 # Keep curated small result CSVs under results/
 !results/*.csv
 !results/*.md
-
