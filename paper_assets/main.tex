@@ -1,0 +1,163 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{url}
+\usepackage{xcolor}
+
+\title{Modeling Personalized Digital Bedtime Routines for Sleep and Stress Prediction Using Multimodal Lifelogs}
+
+\author{
+\IEEEauthorblockN{Junghee Young}
+\IEEEauthorblockA{
+Independent Researcher\\
+Email: your.email@example.com}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Multimodal lifelog data provide a non-invasive view of daily routines that may influence sleep, fatigue, and stress. This paper presents a personalized digital bedtime routine modeling framework for the ETRI Human Understanding AI Paper Challenge, where the goal is to predict seven binary next-day indicators: sleep satisfaction (Q1), pre-sleep fatigue (Q2), stress (Q3), sleep duration (S1), sleep efficiency (S2), sleep latency (S3), and wake-after-sleep-onset time (S4). Instead of treating each sensor table as an independent tabular source, the proposed method reconstructs subject-specific pre-sleep routines from smartphone and wearable logs, including screen use, charging, app usage, light exposure, activity, heart rate, GPS, Wi-Fi, BLE, and pedometer signals. We combine windowed routine features, rolling subject-history features, label-wise gradient boosting models, and conservative temperature calibration optimized for average log-loss. The best public leaderboard submission obtained an average log-loss of 0.5846. SHAP analysis shows that the most influential features are not single raw measurements but routine-level signals such as evening Wi-Fi variability, rolling charging timing, night screen timing, light exposure, and evening heart-rate summaries. These results suggest that personalized bedtime regularity is a meaningful modeling target for sleep and stress prediction from lifelogs.
+\end{abstract}
+
+\begin{IEEEkeywords}
+lifelog, sleep prediction, stress prediction, bedtime routine, multimodal sensing, gradient boosting, calibration, SHAP
+\end{IEEEkeywords}
+
+\section{Introduction}
+Sleep, fatigue, and stress are strongly related to daily behavior, but they are difficult to measure continuously through surveys alone. Smartphones and wearable devices can passively record many behavioral traces, including activity, screen interaction, charging, ambient light, location, and physiological signals. These traces are especially useful before bedtime, when repeated personal routines can reveal sleep hygiene, fatigue accumulation, and stress-related behavior.
+
+The ETRI Human Understanding AI Paper Challenge asks participants to predict seven binary sleep and questionnaire indicators for the next sleep date using multimodal lifelog data. The evaluation metric is average binary log-loss over the seven labels, so calibrated probability estimation is more important than only predicting hard classes. This creates three practical challenges: the number of subjects is small, the same behavior may have different meanings for different people, and public leaderboard optimization can easily overfit when model changes are selected only by submission feedback.
+
+This work proposes a personalized digital bedtime routine approach. The main idea is to convert raw multimodal logs into interpretable routine descriptors, such as when the screen was last used, when the phone was charged, how much the current evening deviated from the subject's recent history, and whether late-night activity or physiological state changed before sleep. The contributions are as follows:
+\begin{itemize}
+    \item A multimodal feature representation that aligns phone and wearable lifelogs to next-day sleep labels through pre-sleep and morning windows.
+    \item A personalized routine modeling strategy using rolling subject-history features and temporal priors to capture within-subject deviations.
+    \item A label-wise gradient boosting and calibration framework designed for average log-loss rather than accuracy.
+    \item An interpretation analysis using SHAP to identify which bedtime routine signals contribute most to stress-related prediction.
+\end{itemize}
+
+\section{Related Work}
+Passive sensing has been widely studied for behavioral health. The StudentLife study showed that smartphone sensing can capture behavioral trends related to mental health, sleep, academic performance, and stress in real-world student life \cite{wang2014studentlife}. Wearable-based sleep studies have also demonstrated that daytime activity traces can predict good or poor sleep quality \cite{sathyanarayana2016sleep}. For stress and affect recognition, WESAD introduced a multimodal wearable dataset containing physiological and motion signals for stress detection \cite{schmidt2018wesad}.
+
+Recent lifelog competition studies have moved toward multimodal fusion. PixleepFlow converted lifelog tables into pixel-based representations for sleep quality and stress prediction and used explainable AI to analyze sensor importance \cite{na2025pixleepflow}. The ETRI Lifelog Dataset further emphasizes sleep quality prediction as a human-centered application of real-world lifelog sensing \cite{etri2025lifelog}. Compared with image-based or end-to-end sequence methods, our approach focuses on a compact, tabular representation of personalized bedtime routines. This is motivated by the limited number of subjects and the importance of stable probability calibration under log-loss.
+
+For the predictive model, gradient boosting decision trees remain strong for heterogeneous tabular data. We used ideas from LightGBM \cite{ke2017lightgbm}, XGBoost \cite{chen2016xgboost}, and CatBoost \cite{prokhorenkova2018catboost}, with scikit-learn utilities for validation and preprocessing \cite{pedregosa2011sklearn}. Because the leaderboard metric evaluates probability quality, we also used conservative temperature scaling, a simple calibration method related to prior calibration work \cite{guo2017calibration}. SHAP was used to interpret the trained tree model \cite{lundberg2017shap}.
+
+\section{Dataset and Task}
+The dataset contains smartphone logs (activity, AC status, screen status, light, app usage, GPS, Wi-Fi, and BLE) and wearable logs (heart rate, light, and pedometer). The target file provides seven binary labels per subject and sleep date. The labels consist of three questionnaire-derived variables (Q1--Q3) and four sleep-index variables (S1--S4). We align sensor data from the day before and around the sleep period to the corresponding next-day sleep date.
+
+Fig.~\ref{fig:prevalence} shows the positive rate of each target in the training set. The labels are moderately imbalanced, especially S1--S3, which means that accuracy can be misleading. For example, a model that predicts the majority class may obtain high accuracy but poor log-loss when it assigns overconfident probabilities to the wrong class. Therefore, we optimized and reported binary log-loss averaged across labels.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig1_label_prevalence.png}
+\caption{Training-label positive rates for the seven binary sleep and questionnaire targets.}
+\label{fig:prevalence}
+\end{figure}
+
+\section{Method}
+Fig.~\ref{fig:pipeline} summarizes the proposed pipeline. Each raw lifelog table is first converted into time-windowed statistics. We then construct personalized routine features, train label-wise probabilistic classifiers, and apply conservative calibration before submission.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig2_pipeline.png}
+\caption{Overview of the proposed personalized digital bedtime routine modeling pipeline.}
+\label{fig:pipeline}
+\end{figure}
+
+\subsection{Windowed Multimodal Features}
+Sensor logs were aggregated by subject and sleep date. We used broad daily windows and pre-sleep windows, including afternoon/evening, 18:00--24:00, 20:00--02:00, and 00:00--09:00. The extracted features include counts, means, standard deviations, first and last event times, total app-use duration, screen-on timing, charging state, light exposure, Wi-Fi signal variability, GPS summaries, step counts, and heart-rate summaries.
+
+\subsection{Personalized Routine Features}
+The key design choice is to model each subject relative to their own recent behavior. For each subject, we computed rolling means and standard deviations over recent days, differences from previous days, and deviations between the current bedtime window and the subject's routine baseline. This representation is intended to capture whether the user went through an unusually delayed, fragmented, or physiologically activated evening routine.
+
+\subsection{Validation and Calibration}
+The challenge test set follows a subject/date structure, so random row-level validation can be optimistic. We therefore used time-aware and subject-aware validation splits to avoid training and validation rows that are too similar in date context. Fig.~\ref{fig:split} visualizes the split structure considered during model selection.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig3_split_structure.png}
+\caption{Subject-date structure used to reason about validation and leaderboard transfer.}
+\label{fig:split}
+\end{figure}
+
+For each label, candidate tree-based models were trained separately because Q1--Q3 and S1--S4 represent different behavioral outcomes. Final probabilities were clipped only to avoid infinite log-loss and calibrated using mild global temperature sharpening. This calibration changed confidence while preserving the relative ranking of examples and was selected because overly aggressive tail manipulation increased public log-loss.
+
+\section{Experiments and Results}
+Table~\ref{tab:cv} reports representative internal validation scores from feature-selection experiments. The results show that sleep-duration related S1 and sleep-delay related S3 were easier than stress-related Q3 and awakening-related S4. This pattern motivated label-wise model selection instead of a single shared model for all targets.
+
+\begin{table}[t]
+\centering
+\caption{Representative label-wise validation log-loss. Lower is better.}
+\label{tab:cv}
+\begin{tabular}{lcc}
+\toprule
+Label & Recursive features & KNN/prior refined \\
+\midrule
+Q1 & 0.6263 & 0.6286 \\
+Q2 & 0.6282 & 0.6175 \\
+Q3 & 0.6391 & 0.6202 \\
+S1 & 0.5497 & 0.5517 \\
+S2 & 0.5877 & 0.5925 \\
+S3 & 0.5607 & 0.5826 \\
+S4 & 0.6202 & 0.6360 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:public} summarizes the public leaderboard trajectory. The initial single-model submission reached 0.6240. Adding label-wise feature families reduced the score below 0.60. The best public score, 0.5846, was obtained by the public-style routine model followed by mild temperature scaling. More aggressive Q2/Q3/S4 tail adjustment increased public log-loss to 0.6036, indicating that direct leaderboard-driven confidence manipulation was not reliable.
+
+\begin{table}[t]
+\centering
+\caption{Public leaderboard log-loss of selected submissions.}
+\label{tab:public}
+\begin{tabular}{p{0.47\linewidth}c}
+\toprule
+Submission family & Public log-loss \\
+\midrule
+Initial CatBoost label-wise single model & 0.6240 \\
+Label-wise feature-family model & 0.6009 \\
+Public-style time-window routine model & 0.5855 \\
+Temperature-scaled routine model ($T^{-1}=1.04$) & 0.5850 \\
+Temperature-scaled routine model ($T^{-1}=1.08$) & \textbf{0.5846} \\
+Aggressive tail adjustment for Q2/Q3/S4 & 0.6036 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig4_score_progress.png}
+\caption{Public leaderboard score progression. Conservative routine modeling and mild calibration improved transfer, while aggressive tail adjustment failed.}
+\label{fig:progress}
+\end{figure}
+
+\section{Interpretability}
+To examine whether the model learned meaningful routine signals, we computed SHAP values for the Q3 stress label using a LightGBM classifier trained on the selected feature table. Fig.~\ref{fig:shap} shows that high-importance features include evening Wi-Fi RSSI variability, rolling charging timing, watch light exposure, phone light count, night screen timing, charging observation counts, and evening heart-rate median. These variables are consistent with the hypothesis that stress and sleep quality are reflected not only by isolated sensor values but also by deviations in evening routine regularity.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig5_shap_summary.png}
+\caption{SHAP summary plot for Q3 stress prediction. Routine timing, connectivity variability, light exposure, and heart-rate features are among the most influential signals.}
+\label{fig:shap}
+\end{figure}
+
+\section{Discussion}
+The experiments suggest two lessons. First, personalized routine features are more stable than raw high-dimensional event features for this small-subject lifelog task. Rolling and delta features helped represent whether the current day was unusual for the same participant, which is more appropriate than comparing all users under a single global baseline. Second, log-loss optimization requires probability calibration. Public feedback showed that small temperature adjustments were useful, but aggressive confidence changes damaged transfer and were therefore excluded from the final modeling principle.
+
+The main limitation is that the dataset contains a small number of subjects, so internal validation remains noisy. The model can identify robust routine-level signals, but it cannot fully distinguish causal effects from subject-specific correlations. Future work should evaluate the approach on larger longitudinal lifelog cohorts and compare tabular routine models with raw sequence architectures such as temporal transformers.
+
+\section{Conclusion}
+This paper presented a personalized digital bedtime routine framework for predicting next-day sleep, fatigue, and stress indicators from multimodal lifelogs. By aggregating smartphone and wearable logs into interpretable bedtime routine features, applying label-wise gradient boosting, and using conservative calibration, the method achieved a best public average log-loss of 0.5846. SHAP analysis supports the central hypothesis that routine timing, screen and charging behavior, light exposure, connectivity variability, and evening physiology provide useful signals for sleep and stress prediction. The proposed framework offers an interpretable and reproducible direction for human-understanding AI based on real-world lifelog data.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

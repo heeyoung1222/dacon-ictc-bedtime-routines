@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Competition data and generated heavy artifacts
+data/
+outputs/
+*.parquet
+*.npz
+feature_table_*.csv
+submission_*.csv
+
+# Keep curated small result CSVs under results/
+!results/*.csv
+!results/*.md
+
